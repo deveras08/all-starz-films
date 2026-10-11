@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a dark "screening room" stage lit by each artist's color. Language switch → hero waveform of every video → KPI tiles → treemap of reach → artist spotlight → biggest hits → ranked bars → year stack → full video list. Spanish is the default language. */
+/* Layout: a dark "screening room" stage lit by each artist's color. Language switch → headline → KPI tiles → waveform of every video in release order → treemap of reach → artist spotlight → biggest hits → (ranked bars, hidden for now) → year stack → full video list. Spanish is the default language. */
 :root {
   color-scheme: dark;
   --bg: #0c0b1d;
@@ -34,6 +34,7 @@
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; overflow-x: hidden; }
 .glow { position: absolute; inset: 0 0 auto 0; height: 900px; pointer-events: none; z-index: 0; overflow: hidden; }
 .glow::before, .glow::after { content: ""; position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.32; }
@@ -60,7 +61,6 @@ header { display: grid; gap: 18px; }
 .eyebrow .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c5); box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2); }
 h1 { font-family: var(--display); font-stretch: 62%; font-weight: 850; font-size: clamp(48px, 9vw, 112px); line-height: 0.9; letter-spacing: -0.01em; text-transform: uppercase; }
 h1 .grad { background: linear-gradient(90deg, var(--c1), var(--c6) 30%, var(--c2) 55%, var(--c3) 85%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.lede { max-width: 70ch; color: var(--ink-2); font-size: 16.5px; }
 .wave-card { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 12px; }
 .wave-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: baseline; margin-bottom: 12px; }
 .wave-head b { font-family: var(--display); font-stretch: 75%; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; }
@@ -264,18 +264,20 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
       </div>
     </div>
     <h1 id="hero-title"></h1>
-    <p class="lede" id="lede"></p>
+  </header>
+
+  <section class="sec" data-i18n-aria="totals">
+    <div class="kpis" id="kpis"></div>
+    <div class="miles" id="miles"></div>
+  </section>
+
+  <section class="sec" data-i18n-aria="waveTitle">
     <div class="wave-card">
       <div class="wave-head"><b data-i18n="waveTitle"></b><span data-i18n="waveNote"></span></div>
       <div class="wave-plot"><div class="wave-grid" id="wave-grid"></div><div class="wave" id="wave" role="list" data-i18n-aria="waveAria"></div></div>
       <div class="wave-years" id="wave-years"></div>
       <div class="legend" id="wave-legend" style="margin-top:12px"></div>
     </div>
-  </header>
-
-  <section class="sec" data-i18n-aria="totals">
-    <div class="kpis" id="kpis"></div>
-    <div class="miles" id="miles"></div>
   </section>
 
   <section class="sec" aria-labelledby="h-share">
@@ -293,7 +295,7 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
     <div class="posters" id="posters"></div>
   </section>
 
-  <section class="sec" aria-labelledby="h-artist">
+  <section class="sec" aria-labelledby="h-artist" id="sec-artist" hidden>
     <div class="sec-head"><div class="sec-title"><h2 id="h-artist" data-i18n="hArtist"></h2><p data-i18n="artistSub"></p></div></div>
     <div class="controls"><div class="seg" id="metric-seg" role="group" data-i18n-aria="metric"></div></div>
     <div class="card"><div class="hbars" id="artist-bars"></div></div>
@@ -362,9 +364,6 @@ const I18N = {
     eyebrow: 'Christian music videos',
     hero1: n => n + ' videos. ',
     hero2: v => (v / 1e9).toFixed(2) + ' billion views.',
-    lede1: 'Every Christian music video in the ',
-    ledeLink: 'All Starz Films playlist',
-    lede2: (ar, y0, y1, lk, cm) => ': ' + ar + ' artists, ' + y0 + '–' + y1 + ', with ' + lk + ' likes and ' + cm + ' comments on YouTube.',
     waveTitle: 'Every video, in release order',
     waveNote: 'Bar height = lifetime views (log scale) · hover a bar for the video',
     waveAria: 'All videos by release date',
@@ -417,9 +416,6 @@ const I18N = {
     eyebrow: 'Videos de música cristiana',
     hero1: n => n + ' videos. ',
     hero2: v => fullFmt.format(Math.round(v / 1e7) * 10) + ' millones de vistas.',
-    lede1: 'Todos los videos de música cristiana de la ',
-    ledeLink: 'lista de reproducción de All Starz Films',
-    lede2: (ar, y0, y1, lk, cm) => ': ' + ar + ' artistas, ' + y0 + '–' + y1 + ', con ' + lk + ' de me gusta y ' + cm + ' comentarios en YouTube.',
     waveTitle: 'Cada video, en orden de lanzamiento',
     waveNote: 'Altura de la barra = vistas acumuladas (escala logarítmica) · pasa el cursor por una barra para ver el video',
     waveAria: 'Todos los videos por fecha de lanzamiento',
@@ -538,11 +534,6 @@ function renderStatic() {
 function renderHeader() {
   $('snap').textContent = t('snapLabel', t('snap'));
   $('hero-title').replaceChildren(t('hero1', S.videos), el('span', {class: 'grad'}, t('hero2', S.views)));
-  $('lede').replaceChildren(
-    t('lede1'),
-    el('a', {href: PLAYLIST, target: '_blank', rel: 'noopener'}, t('ledeLink')),
-    t('lede2', S.artists, S.firstYear, S.lastYear, compact(S.likes), compact(S.comments))
-  );
 }
 
 /* Waveform: one bar per video in release order, log scale */
@@ -844,8 +835,7 @@ function renderAll(first) {
   drawTree();
   renderSpots();
   renderPosters();
-  renderSeg();
-  renderBars();
+  if (!$('sec-artist').hidden) { renderSeg(); renderBars(); }
   renderYears();
   renderFilterOptions();
   if (!first) vt.draw();
