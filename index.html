@@ -279,27 +279,20 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
     <div class="spots" id="spots"></div>
   </section>
 
-  <section class="sec" aria-labelledby="h-artist">
-    <div class="sec-head"><div class="sec-title"><h2 id="h-artist">All artists ranked</h2><p>Each video counts once, under its lead artist (the first artist named in the title). Switch the metric to re-rank.</p></div></div>
-    <div class="controls"><div class="seg" id="metric-seg" role="group" aria-label="Metric"></div></div>
-    <div class="card"><div class="hbars" id="artist-bars"></div></div>
-    <div class="tscroll"><table id="artist-table" aria-label="Metrics by lead artist"></table></div>
-  </section>
-
-  <section class="sec" aria-labelledby="h-year">
-    <div class="sec-head"><div class="sec-title"><h2 id="h-year">Views by release year</h2><p>Lifetime views of the videos released each year, colored by artist. Older videos have had more time to build views.</p></div><div class="legend" id="year-legend"></div></div>
-    <div class="card"><div class="cols" id="year-cols"></div><div class="xlabels" id="year-x"></div></div>
-  </section>
-
   <section class="sec" aria-labelledby="h-top">
     <div class="sec-head"><div class="sec-title"><h2 id="h-top">The biggest hits</h2><p id="top-sub"></p></div></div>
     <div class="posters" id="posters"></div>
   </section>
 
-  <section class="sec" aria-labelledby="h-collab">
-    <div class="sec-head"><div class="sec-title"><h2 id="h-collab">Collaborations</h2><p>Every artist named in a title, as lead or featured. Views are those of the videos each artist appears on, so they overlap and do not add up to the total.</p></div></div>
-    <div class="tscroll"><table id="credits-table" aria-label="Artist appearances"></table></div>
-    <details id="credits-more"><summary>Show all artists</summary></details>
+  <section class="sec" aria-labelledby="h-artist">
+    <div class="sec-head"><div class="sec-title"><h2 id="h-artist">All artists ranked</h2><p>Each video counts once, under its lead artist (the first artist named in the title). Switch the metric to re-rank.</p></div></div>
+    <div class="controls"><div class="seg" id="metric-seg" role="group" aria-label="Metric"></div></div>
+    <div class="card"><div class="hbars" id="artist-bars"></div></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-year">
+    <div class="sec-head"><div class="sec-title"><h2 id="h-year">Views by release year</h2><p>Lifetime views of the videos released each year, colored by artist. Older videos have had more time to build views.</p></div><div class="legend" id="year-legend"></div></div>
+    <div class="card"><div class="cols" id="year-cols"></div><div class="xlabels" id="year-x"></div></div>
   </section>
 
   <section class="sec" aria-labelledby="h-all">
@@ -312,11 +305,6 @@ footer { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--lin
       <span class="count" id="count"></span>
     </div>
     <div class="tscroll"><table id="video-table" aria-label="All videos"></table></div>
-  </section>
-
-  <section class="sec" aria-labelledby="h-about">
-    <div class="sec-head"><div class="sec-title"><h2 id="h-about">About the data</h2></div></div>
-    <div class="about" id="about"></div>
   </section>
 
   <footer id="foot"></footer>
@@ -612,19 +600,6 @@ function sortableTable(table, cols, rowsFn, opts) {
   draw();
   return {draw};
 }
-sortableTable(document.getElementById('artist-table'), [
-  {k: 'artist', label: 'Lead artist', text: true, render: a => el('span', null, el('span', {class: 'dot', style: 'background:' + colorOf(a.artist)}), a.artist)},
-  {k: 'videos', label: 'Videos', n: true},
-  {k: 'views', label: 'Views', n: true, f: full},
-  {k: 'share', label: 'Share', n: true, f: x => x < 0.05 ? '<0.1%' : x.toFixed(1) + '%'},
-  {k: 'likes', label: 'Likes', n: true, f: full},
-  {k: 'comments', label: 'Comments', n: true, f: full},
-  {k: 'avgViews', label: 'Avg views', n: true, f: compact},
-  {k: 'engPer1k', label: 'Eng / 1K', n: true, f: x => x.toFixed(1)},
-  {k: 'first', label: 'Years', n: true, f: (x, a) => a.first === a.last ? String(a.first) : a.first + '–' + a.last},
-  {k: 'top', label: 'Most-viewed video', sortv: a => a.top.views, render: a => a.top.song + ' · ' + compact(a.top.views)},
-], () => A, {sortK: 'views', dir: 'desc', click: a => filterToArtist(a.artist)});
-
 /* Year stack */
 (function years() {
   const yrs = DATA.years;
@@ -659,23 +634,6 @@ top12.forEach((v, i) => {
     el('div', {class: 'meta'}, el('b', null, v.song), el('span', null, v.credits.join(' · ') + ' · ' + v.year))));
 });
 
-/* Collaborations */
-const collabs = {};
-for (const v of V) for (const a of v.credits) { const s = collabs[a] || (collabs[a] = []); for (const b of v.credits) if (b !== a && !s.includes(b)) s.push(b); }
-let creditsAll = false;
-const creditsTable = sortableTable(document.getElementById('credits-table'), [
-  {k: 'artist', label: 'Artist', text: true, render: c => el('span', null, el('span', {class: 'dot', style: 'background:' + colorOf(c.artist)}), c.artist)},
-  {k: 'lead', label: 'As lead', n: true},
-  {k: 'featured', label: 'Featured', n: true},
-  {k: 'total', label: 'Appearances', n: true, sortv: c => c.lead + c.featured, f: (x, c) => c.lead + c.featured},
-  {k: 'views', label: 'Views of those videos', n: true, f: full},
-  {k: 'with', label: 'Worked with', sortv: c => (collabs[c.artist] || []).length, render: c => el('div', {class: 'chips'}, (collabs[c.artist] || []).slice(0, 6).map(n => el('span', {class: 'chip'}, n)))},
-], () => creditsAll ? DATA.credits : DATA.credits.filter(c => c.lead + c.featured >= 2), {sortK: 'total', dir: 'desc'});
-const credSum = document.querySelector('#credits-more summary');
-const setSum = () => { credSum.textContent = creditsAll ? 'Show only artists with 2+ appearances' : 'Show all ' + DATA.credits.length + ' artists'; };
-setSum();
-document.getElementById('credits-more').addEventListener('toggle', e => { creditsAll = e.target.open; setSum(); creditsTable.draw(); });
-
 /* All videos */
 const fa = document.getElementById('f-artist'), fy = document.getElementById('f-year'), q = document.getElementById('q');
 fa.append(el('option', {value: ''}, 'All artists'));
@@ -705,15 +663,6 @@ function filterToArtist(name) {
   document.getElementById('h-all').scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth', block: 'start'});
 }
 
-/* About */
-const about = [
-  ['Source', ['All ' + S.videos + ' videos in the public “All Starz Films Videos” playlist, read from YouTube on ' + SNAP + '. Counts keep growing; this is a snapshot.']],
-  ['Definitions', ['Views, likes and comments are YouTube’s public lifetime counts. Comment counts include replies.', 'Engagement = (likes + comments) ÷ views × 1,000.', 'Views / day = lifetime views ÷ days since release.']],
-  ['Artists', ['Each video counts once, under the first artist named in its title. Featured artists show up under Collaborations.', 'The seven artists with the most views each get their own color; the other ' + otherCount + ' share one.']],
-  ['Adding videos', ['Add any missing videos to the playlist, then ask Claude to refresh the dashboard. It updates at this same link.']],
-];
-const aBox = document.getElementById('about');
-for (const [h, items] of about) aBox.append(el('div', null, el('h3', null, h), items.length === 1 ? el('p', null, items[0]) : el('ul', null, items.map(i => el('li', null, i)))));
 document.getElementById('foot').append('YouTube public counts · snapshot ' + SNAP + ' · ', el('a', {href: PLAYLIST, target: '_blank', rel: 'noopener'}, 'Open the playlist'), ' · All Starz Films');
 
 </script>
